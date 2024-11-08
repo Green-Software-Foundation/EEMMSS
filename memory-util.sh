@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Fetches memory utilization accurately on macOS by including active app memory, wired memory, and compressed memory
+# Fetches memory utilization accurately across macOS, Linux, and Windows
 get_memory_usage() {
     case "$(uname -s)" in
         Darwin)
-            # Calculate memory utilization using app, wired, and compressed memory
+            # Calculate memory utilization on macOS using active app memory, wired memory, and compressed memory
             vm_stat | awk '
             /Pages free/ {free=$3} 
             /Pages active/ {active=$3} 
@@ -19,7 +19,15 @@ get_memory_usage() {
             ;;
         Linux)
             # For Linux, excluding cache and buffers
-            free | awk '/Mem:/ {used=$3-$6-$7; total=$2; printf "Memory Utilization: %.2f%%\n", (used / total) * 100}'
+            total_mem=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+            free_mem=$(grep MemFree /proc/meminfo | awk '{print $2}')
+            buffers=$(grep Buffers /proc/meminfo | awk '{print $2}')
+            cached=$(grep '^Cached' /proc/meminfo | awk '{print $2}')
+            
+            used_mem=$((total_mem - free_mem - buffers - cached))
+            used_percentage=$(awk "BEGIN {print ($used_mem / $total_mem) * 100}")
+
+            printf "Memory Utilization: %.2f%%\n" "$used_percentage"
             ;;
         CYGWIN*|MINGW*|MSYS*)
             # For Windows CMD or PowerShell
