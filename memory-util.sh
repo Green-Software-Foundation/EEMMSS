@@ -18,16 +18,15 @@ get_memory_usage() {
             }'
             ;;
         Linux)
-            # For Linux, excluding cache and buffers
-            total_mem=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-            free_mem=$(grep MemFree /proc/meminfo | awk '{print $2}')
-            buffers=$(grep Buffers /proc/meminfo | awk '{print $2}')
-            cached=$(grep '^Cached' /proc/meminfo | awk '{print $2}')
-            
-            used_mem=$((total_mem - free_mem - buffers - cached))
-            used_percentage=$(awk "BEGIN {print ($used_mem / $total_mem) * 100}")
+            # For Linux
+            MemFree=$(cat /proc/meminfo | grep -i MemFree | awk '{print $2}')
+            Buffers=$(cat /proc/meminfo | grep -i Buffers | awk '{print $2}')
+            Cached=$(cat /proc/meminfo | grep -i Cached | grep -v SwapCached | awk '{print $2}')
+            MemTotal=$(cat /proc/meminfo | grep -i MemTotal | awk '{print $2}')
 
-            printf "Memory Utilization: %.2f%%\n" "$used_percentage"
+            ramperutil=$(echo "scale=4; ($MemTotal - $MemFree - $Buffers - $Cached) / $MemTotal * 100" | bc)
+
+            printf "Memory Utilization: %.2f%%\n" "$ramperutil"
             ;;
         CYGWIN*|MINGW*|MSYS*)
             # For Windows CMD or PowerShell
