@@ -36,15 +36,10 @@ get_memory_usage() {
             printf "Memory Utilization: %.2f%%\n" "$memory_utilization"
             ;;
         CYGWIN*|MINGW*|MSYS*)
-            # For Windows CMD or PowerShell
-            if command -v wmic &> /dev/null; then
-                wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value | awk -F "=" '
-                /TotalVisibleMemorySize/ {total=$2} 
-                /FreePhysicalMemory/ {free=$2} 
-                END {used=total-free; printf "Memory Utilization: %.2f%%\n", (used / total) * 100}'
-            else
-                powershell -Command "Get-Counter '\Memory\% Committed Bytes In Use' | ForEach-Object {Write-Output ('Memory Utilization: ' + $_.CounterSamples.CookedValue + '%')}"
-            fi
+            # For Git Bash on Windows
+            memory_utilization=$(powershell -Command "(Get-Counter '\Memory\% Committed Bytes In Use').CounterSamples.CookedValue")
+            rounded_memory_utilization=$(echo "$memory_utilization" | awk '{printf "%.2f", $1}')
+            printf "Memory Utilization: %.2f%%\n" "$rounded_memory_utilization"
             ;;
         *)
             echo "Unsupported OS"
