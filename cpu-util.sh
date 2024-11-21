@@ -12,14 +12,8 @@ get_cpu_usage() {
             top -l 1 | awk '/CPU usage:/ {print "CPU Utilization:", $3}'
             ;;
         CYGWIN*|MINGW*|MSYS*)
-            # For Windows CMD or PowerShell
-            if command -v wmic &> /dev/null; then
-                # If CMD or PowerShell
-                wmic cpu get loadpercentage | awk 'NR>1 {print "CPU Utilization:", $1"%"}'
-            else
-                # Fallback for Windows PowerShell (without WSL)
-                powershell -Command "Get-Counter -Counter '\Processor(_Total)\% Processor Time' | ForEach-Object {Write-Output ('CPU Utilization: ' + $_.CounterSamples.CookedValue + '%')}"
-            fi
+            # For Git Bash (Windows with WSL)
+            grep -m 1 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5); printf "CPU Utilization: %.2f%\n", usage}'
             ;;
         *)
             echo "Unsupported OS"
